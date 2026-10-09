@@ -506,7 +506,7 @@ fn duplicates_preserve_exact_runs_but_do_not_inherit_uncertain_history() {
 }
 
 #[test]
-fn selectors_and_source_ownership_follow_qm_parser() {
+fn selectors_and_source_ownership_follow_markdown_parser() {
     let source = "Preamble.\r\n# Outer\r\n## A > B\r\n- [ ] Task  \r\n  - 日本語\r\n> reply\r\n```md\r\n# Hidden\r\n```\r\n## Other\r\n- [ ] Task  \r\n";
     let tree = Tree::new(source);
     let task = tree.select(&["A > B".into(), "[ ] Task  ".into()]).unwrap();

@@ -95,7 +95,7 @@ impl Request {
                 _ => {
                     return Err(Error::new(
                         "usage",
-                        format!("Unknown option {key}; use qm read --help"),
+                        format!("Unknown option {key}; use mdt read --help"),
                     ))
                 }
             }
@@ -110,7 +110,7 @@ impl Request {
             ));
         }
         Ok(Some(Self {
-            path: path.ok_or_else(|| Error::new("usage", "Expected qm read FILE; use --help"))?,
+            path: path.ok_or_else(|| Error::new("usage", "Expected mdt read FILE; use --help"))?,
             since,
             labels,
             find,
@@ -270,7 +270,7 @@ fn format_time(time: i64) -> Result<String> {
         })
 }
 
-/// Record the current saved bytes using the same tracking state as `qm read`.
+/// Record the current saved bytes using the same tracking state as `mdt read`.
 ///
 /// The GUI calls this off its UI thread after opening, saving or reloading a
 /// note. Only a path is queued: this function rereads the file under the shared
@@ -334,7 +334,7 @@ fn observe_impl(
             Error::new(
                 "not_found",
                 format!(
-                    "File {:?} not found. Usage: qm read FILE [--node LABEL]...",
+                    "File {:?} not found. Usage: mdt read FILE [--node LABEL]...",
                     request.path
                 ),
             )

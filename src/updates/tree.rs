@@ -267,7 +267,7 @@ impl<'a> Tree<'a> {
                 for (position, &node) in candidates.iter().enumerate() {
                     let path = format!("\n  {:?}", self.path(node));
                     if position == 5 || message.len() + path.len() > 8_192 {
-                        message.push_str("\nMore matching paths omitted; use qm doc outline FILE.");
+                        message.push_str("\nMore matching paths omitted; use mdt outline FILE.");
                         break;
                     }
                     message.push_str(&path);
@@ -322,7 +322,7 @@ impl<'a> Tree<'a> {
             }
             let path = format!("\n  {:?}", self.path(i));
             if shown == 5 || message.len() + path.len() > 8_192 {
-                message.push_str("\nMore candidates omitted; use qm doc outline FILE.");
+                message.push_str("\nMore candidates omitted; use mdt outline FILE.");
                 break;
             }
             if shown == 0 {
@@ -335,7 +335,7 @@ impl<'a> Tree<'a> {
         }
         if shown > 0 {
             message.push_str(if duplicate_path {
-                "\nIdentical paths cannot select separate nodes. Read a containing scope, or use qm read FILE --find TEXT with a unique phrase."
+                "\nIdentical paths cannot select separate nodes. Read a containing scope, or use mdt find FILE TEXT with a unique phrase."
             } else {
                 "\nRepeat --node for successive labels."
             });

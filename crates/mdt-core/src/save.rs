@@ -37,7 +37,7 @@ pub fn atomic_write_bytes(target: &Path, contents: &[u8]) -> Result<()> {
         .into_owned();
     let nonce = TMP_COUNTER.fetch_add(1, Ordering::Relaxed);
     let tmp_path = dir.join(format!(
-        ".{file_name}.qm-tmp-{}-{nonce}",
+        ".{file_name}.mdt-tmp-{}-{nonce}",
         std::process::id()
     ));
 
@@ -138,7 +138,7 @@ mod tests {
         let leftovers: Vec<_> = fs::read_dir(dir.path())
             .unwrap()
             .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
-            .filter(|n| n.contains("qm-tmp"))
+            .filter(|n| n.contains("mdt-tmp"))
             .collect();
         assert!(leftovers.is_empty(), "leftover temp files: {leftovers:?}");
     }
@@ -262,7 +262,7 @@ mod tests {
             .unwrap()
             .flatten()
             .map(|e| e.file_name().to_string_lossy().into_owned())
-            .filter(|n| n.contains("qm-tmp"))
+            .filter(|n| n.contains("mdt-tmp"))
             .collect();
         assert!(
             leftovers.is_empty(),

@@ -12,7 +12,7 @@ use serde_json::{json, Value};
 
 use crate::error::{Error, Result};
 
-pub const BUILD: &str = concat!(env!("CARGO_PKG_VERSION"), " (", env!("QM_CLI_BUILD"), ")");
+pub const BUILD: &str = concat!(env!("CARGO_PKG_VERSION"), " (", env!("MDT_CLI_BUILD"), ")");
 const ENDPOINT: &str = "https://qm.venka.com/api/feedback";
 const MAX_CHARACTERS: usize = 10_000;
 const MAX_ATTACHMENT: usize = 5 * 1024 * 1024;
@@ -207,7 +207,7 @@ pub fn send(body: &OsStr, paths: &[PathBuf], as_json: bool) -> Result<String> {
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_nanos();
-    let boundary = format!("qm-feedback-{}-{nonce:x}", std::process::id());
+    let boundary = format!("mdt-feedback-{}-{nonce:x}", std::process::id());
     let mut payload = Vec::new();
     for (name, value) in [
         ("description", description.as_str()),
@@ -215,7 +215,7 @@ pub fn send(body: &OsStr, paths: &[PathBuf], as_json: bool) -> Result<String> {
         ("linkedin", linkedin.as_str()),
         ("product", "qm"),
         ("app_version", BUILD),
-        ("app_commit", env!("QM_CLI_COMMIT")),
+        ("app_commit", env!("MDT_CLI_COMMIT")),
     ] {
         write!(
             payload,
@@ -254,7 +254,7 @@ pub fn send(body: &OsStr, paths: &[PathBuf], as_json: bool) -> Result<String> {
         ))
         .args([
             "--user-agent",
-            concat!("qm-cli/", env!("CARGO_PKG_VERSION")),
+            concat!("mdt/", env!("CARGO_PKG_VERSION")),
             "--data-binary",
             "@-",
             "--url",

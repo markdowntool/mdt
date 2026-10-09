@@ -37,6 +37,6 @@ fn main() {
         Some(_) => "-dirty",
         None => "",
     };
-    println!("cargo:rustc-env=QM_CLI_COMMIT={revision}");
-    println!("cargo:rustc-env=QM_CLI_BUILD={revision}{suffix}");
+    println!("cargo:rustc-env=MDT_CLI_COMMIT={revision}");
+    println!("cargo:rustc-env=MDT_CLI_BUILD={revision}{suffix}");
 }

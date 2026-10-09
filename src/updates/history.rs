@@ -132,7 +132,7 @@ fn historical_text_impl(
         .ok_or_else(|| {
             Error::new(
                 "history_unavailable",
-                "Observation is not retained for this file; run qm history FILE",
+                "Observation is not retained for this file; run mdt history FILE",
             )
         })?;
     let payload = history_store::fetch(&transaction, &path, entry)?;

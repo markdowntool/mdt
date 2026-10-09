@@ -63,9 +63,9 @@ mod tests {
                 "usage"
             );
         }
-        let paths = resolve(Some(Path::new("/isolated/qm")), None, None).unwrap();
-        assert_eq!(paths.gates, Path::new("/isolated/qm"));
-        assert_eq!(paths.database, Path::new("/isolated/qm/updates.sqlite3"));
+        let paths = resolve(Some(Path::new("/isolated/mdt")), None, None).unwrap();
+        assert_eq!(paths.gates, Path::new("/isolated/mdt"));
+        assert_eq!(paths.database, Path::new("/isolated/mdt/updates.sqlite3"));
     }
 
     #[test]
