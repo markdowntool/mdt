@@ -1,0 +1,2 @@
+# Preserve original upstream license and notice bytes, including line endings.
+THIRD_PARTY_NOTICES.txt -text -whitespace linguist-generated=true

@@ -1,0 +1,16 @@
+[package]
+name = "mdt-core"
+version = "0.1.0"
+description = "Portable Markdown source parsing and guarded file operations"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[dependencies]
+anyhow = "1"
+chrono = { version = "0.4", default-features = false, features = ["std"] }
+uuid = { version = "1", features = ["v4"] }
+pulldown-cmark = { version = "0.13", default-features = false }
+
+[dev-dependencies]
+tempfile = "3"

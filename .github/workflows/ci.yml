@@ -1,0 +1,84 @@
+name: Build and test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native:
+    name: ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-x86_64
+            runner: ubuntu-24.04
+            target: x86_64-unknown-linux-musl
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-musl
+          - platform: macos-arm64
+            runner: macos-14
+            target: aarch64-apple-darwin
+          - platform: macos-x86_64
+            runner: macos-15-intel
+            target: x86_64-apple-darwin
+    env:
+      CARGO_TERM_COLOR: always
+      CLI_NATIVE_LINUX: '1'
+      CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER: musl-gcc
+      CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER: musl-gcc
+    steps:
+      - name: Check out source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Python for packaging
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - name: Install native musl compiler
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes musl-tools pkg-config
+      - name: Install the pinned Rust toolchain and target
+        run: |
+          rustup show
+          rustup target add '${{ matrix.target }}'
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Test libraries and command behavior
+        run: cargo test --workspace --locked
+      - name: Test packaging
+        run: python3 -m unittest discover -s script -p 'test_*.py'
+      - name: Build the native release target
+        run: script/build-cli.sh '${{ matrix.platform }}'
+      - name: Exercise the native executable
+        run: python3 script/smoke_cli.py 'target/${{ matrix.target }}/release/mdt'
+      - name: Package an unsigned test artifact
+        shell: bash
+        run: |
+          version=$(cargo metadata --no-deps --format-version 1 | python3 -c 'import json,sys; print(next(p["version"] for p in json.load(sys.stdin)["packages"] if p["name"] == "mdt"))')
+          python3 script/package_cli.py --version "$version" --platform '${{ matrix.platform }}' --allow-dirty --output dist/ci
+      - name: Save the verified test archive
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mdt-${{ matrix.platform }}-${{ github.sha }}
+          path: |
+            dist/ci/*.tar.gz
+            dist/ci/mdt-verification.json
+          if-no-files-found: error
+          retention-days: 3

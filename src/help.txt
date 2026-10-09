@@ -1,0 +1,22 @@
+mdt — read, compare and edit saved Markdown
+
+Usage: mdt COMMAND [OPTIONS]
+
+Commands:
+  read       Read Markdown from a saved version.
+  diff       Compare two versions.
+  find       Find exact text and return its locations.
+  outline    List headings and list items.
+  replace    Replace exact text or a selected part.
+  insert     Insert text before or after a selected part.
+  history    List retained observations.
+  forget     Remove a source's retained versions.
+  feedback   Send product feedback.
+
+Options:
+  -h, --help    Show help without reading files or state.
+  --version     Show the installed build.
+
+Read: mdt read note.md
+Compare: mdt diff note.md --since REV
+Details: mdt COMMAND -h; man mdt

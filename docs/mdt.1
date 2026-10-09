@@ -1,0 +1,148 @@
+.TH MDT 1 "2026-10-09" "mdt 0.1.0" "User Commands"
+.SH NAME
+.nf
+    mdt — read, compare and edit saved Markdown
+
+.SH SYNOPSIS
+.nf
+    mdt read FILE [selection] [--rev REV] [output options]
+    mdt diff FILE --since REV [--rev REV] [--node LABEL]... [output options]
+    mdt find FILE TEXT [--node LABEL]... [--rev REV] [output options]
+    mdt outline FILE [--node LABEL]... [--rev REV] [output options]
+    mdt replace FILE --rev REV [--node LABEL]... --old TEXT --new TEXT [write options]
+    mdt replace FILE --rev REV selection --body FILE|- [write options]
+    mdt insert FILE --rev REV (--before TARGET|--after TARGET) --body FILE|-
+        [write options]
+    mdt history FILE [output options]
+    mdt forget FILE [--dry-run] [--max-bytes N] [--json]
+    mdt COMMAND FILE --cursor CURSOR    (read, diff, find, outline, history)
+
+.SH DESCRIPTION
+.nf
+    Operate on saved Markdown without starting Emm. Source remains ordinary
+    Markdown. Versions, targets and continuations live in bounded local storage.
+    No command records an agent's identity or advances a reading position.
+
+    Each command does one operation. read returns text; diff compares versions;
+    find locates exact source; outline lists structure. replace and insert write.
+    history lists retained observations; forget removes retained versions.
+
+.SH VERSIONS
+.nf
+    --rev selects the version against which selections and edit intentions are
+    interpreted. Without it, reads use current saved text. Writes require it.
+    --since is the start of a diff; --rev is its endpoint. Both are revisions.
+    A comparison reports net differences. A → B → A has no net difference;
+    retained history may show the intervening observations.
+
+    Versions identify bytes, not what anyone has read. Keep the earlier baseline
+    until the desired comparison has been delivered and processed. Reading one
+    section establishes no knowledge of its siblings. Observation dates are not
+    guaranteed edit dates. Unobserved intermediate saves may be absent.
+
+.SH SELECTION
+.nf
+    --node matches exact heading/list-item labels. Repeat labels for ancestry.
+    --target selects an exact range returned at --rev. D is the document range.
+    These are source locations, not permanent identities embedded in Markdown.
+    Named diff selection checks both sides so removed sections remain discoverable.
+    Duplicate or missing selections are explicit errors, never guessed matches.
+
+.SH CONTEXT AND OUTPUT
+.nf
+    Short prose may be shown as a complete paragraph or comment. Long prose uses
+    exact before/current excerpts. Heading paths and explicit comment stamps aid
+    interpretation. Source-line length does not determine the output bound.
+    diff and find accept --context-words N with the same meaning.
+
+    --max-bytes caps the complete UTF-8 response, including metadata; default 8192.
+    Reads, diffs, search, outline and history use complete and next_cursor when
+    paging. --cursor continues that same query at pinned versions and options.
+    Conflicting options on a continuation are a usage error.
+    Pending changed source is never silently omitted as if it were merely context.
+
+    Data is written to stdout. Errors and plain-text notices go to stderr.
+    --json returns structured data with exact source strings and embedded result
+    notices. Errors in JSON mode go to stderr. No automatic pager or prompts.
+
+.SH WRITES
+.nf
+    --body accepts a source file or - for stdin; --old/--new accept literals.
+    Input is exact, including whitespace and the final newline. There is no
+    implicit dedentation, list renumbering or newline stripping.
+    Literal replacement requires exactly one match. Empty replacement deletes.
+    Counts describe affected occurrences or targets, not characters or lines.
+
+    Resolve the intended target at --rev first. For a literal edit, the target is
+    the matched range, not its entire containing section. Changes elsewhere in
+    that section can therefore coexist with the edit. If the range cannot be
+    located unambiguously in current source, refuse. A newly duplicated literal
+    does not authorize choosing the first match.
+
+    An unchanged, unambiguous target can be edited while other parts changed.
+    The receipt gives previous and resulting versions and a bounded notice of
+    intervening edits. The same diff command can inspect them.
+    A changed target is refused unless --force explicitly permits its replacement
+    or permits insertion beside a changed, still-unambiguous anchor.
+    --force does not disable unique selection or exact literal matching.
+
+    Preserve a changed pre-write version before committing, so forced overwrites
+    remain inspectable within retention. Refuse the concurrent write if that
+    prerequisite cannot be met. Check and commit against one consistent live view.
+    Preserve source outside the selected edit; never apply a partial write.
+
+    --dry-run validates and reports the same operation without mutating Markdown
+    (or retention records for forget). It reserves nothing. A lost receipt is an
+    unknown result; inspect current state before retrying an insertion.
+
+.SH RETENTION
+.nf
+    History, versions and references are local and bounded, not a backup promise.
+    Expiry produces revision_unavailable rather than guessed continuity.
+    forget removes retained state for a file, never its source Markdown.
+    A normal read can establish a new retained view after expiry.
+
+.SH FILES
+.nf
+    ~/.emm/notes/updates.sqlite3
+        Unified store for observed versions and retained references,
+        shared with Emm Notes. There is no separate CLI snapshot cache to manage.
+
+.SH ENVIRONMENT
+.nf
+    EMM_HOME
+        Replaces ~/.emm; state is in its notes subdirectory. Relative values are
+        resolved from the working directory; an empty value means that directory.
+        Use the same resolved location in Emm and mdt to share observations.
+    QM_STATE_DIR
+        Overrides the CLI state location with an absolute directory for isolated
+        use. It does not relocate Emm Notes' state. Empty or relative values are
+        refused. Use isolated note copies: writers using different state stores
+        do not share write coordination.
+
+.SH EXIT STATUS
+.nf
+    0  Success, including no changes, a no-op or a find with no matches.
+    2  Invalid arguments or a requested budget too small for a result envelope.
+    3  File, selection or literal replacement match not found.
+    4  Ambiguous edit or selection.
+    5  The target changed; no write committed.
+    6  A required retained version or reference is unavailable.
+    9  Write contention; no write committed.
+   10  Storage or I/O failure. A receipt must distinguish a successful source save
+       followed by a retention warning from a save that never happened.
+
+.SH EXAMPLES
+.nf
+    mdt read note.md
+    mdt diff note.md --since R1
+    mdt diff note.md --since R1 --rev R2
+    mdt find note.md 'the old wording'
+    mdt replace note.md --rev R2 --old 'the old wording' --new 'the new wording'
+    mdt insert note.md --rev R2 --before D --body introduction.md
+    mdt history note.md
+
+.SH SEE ALSO
+.nf
+    mdt COMMAND -h
+    mdt feedback -h
