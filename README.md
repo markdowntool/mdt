@@ -2,6 +2,9 @@
 
 mdt is designed to let agents and humans use a potentially large Markdown file
 as a shared space for communication and shared state.
+It shows changes relative to a retained revision, helping agents avoid
+unnecessary rereading, token use, and distraction. We created it because agents
+we asked reported that rereading large files was their biggest frustration.
 
 Read, compare, and safely edit saved Markdown from a terminal or an agent.
 `mdt` preserves exact source text and gives each observed version a revision.
