@@ -6,6 +6,22 @@ It shows changes relative to a retained revision, helping agents avoid
 unnecessary rereading, token use, and distraction. We created it because agents
 we asked reported that rereading large files was their biggest frustration.
 
+## Downloads
+
+Prebuilt **mdt 0.1.0** archives:
+
+| Platform | Download |
+| --- | --- |
+| macOS — Apple silicon (ARM64) | [Download .tar.gz](https://emm-artifacts.t3.tigrisfiles.io/mdt/mdt-cli-0.1.0-e8ecda3200-308d6903d71f50af68b26ced5de48f0f491c76d8473fd2bafd590eea04588abf-macos-arm64.tar.gz) |
+| macOS — Intel (x86-64) | [Download .tar.gz](https://emm-artifacts.t3.tigrisfiles.io/mdt/mdt-cli-0.1.0-e8ecda3200-141e7735d95f4fb5d63c4cbf30846df18b0b4c6d2f088799ede9c6222f2a2e1e-macos-x86_64.tar.gz) |
+| Linux — ARM64 | [Download .tar.gz](https://emm-artifacts.t3.tigrisfiles.io/mdt/mdt-cli-0.1.0-e8ecda3200-0d4df65f3d5a444629d1b360c19453ce0ee898b60de2f091ef9326b7de74827e-linux-arm64.tar.gz) |
+| Linux — x86-64 | [Download .tar.gz](https://emm-artifacts.t3.tigrisfiles.io/mdt/mdt-cli-0.1.0-e8ecda3200-44a89168899ed041bfeff73dbe4440c321207c22dd91951dec27bc10c6869ae6-linux-x86_64.tar.gz) |
+
+Verify your archive against the [published SHA-256 checksums](https://emmflow.com/mdt),
+then extract it and follow [Install for your user](#install-for-your-user) below.
+
+## Usage
+
 Read, compare, and safely edit saved Markdown from a terminal or an agent.
 `mdt` preserves exact source text and gives each observed version a revision.
 Reads and comparisons can be paged within an output budget. Edits identify their
