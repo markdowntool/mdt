@@ -103,6 +103,14 @@ A changed target returns `conflict`; `--force` permits overwriting a changed
 uniquely located target or inserting beside that anchor. It does not restore
 missing literals or choose among duplicate headings. Ambiguous moves are refused.
 
+<!-- Reporting revision: Codex · GPT-6 (exact variant unavailable) · session 01a15578-ff67-77e2-90a9-ffccd1c679b3 · 2026-10-19 -->
+If a target was valid at the baseline but cannot be resolved in changed source,
+the error says the source changed and includes `current_revision` for the retained
+bytes. Missing and ambiguous targets keep their usual exit codes (3 and 4).
+An invalid baseline selection remains a selection error without that context.
+Both plain-text and JSON errors show `current_revision` when available; inspect
+it with `mdt read FILE --rev REV` or `mdt diff FILE --since BASE --rev REV`.
+
 Receipts contain `base`, `previous`, `revision`, `matched`/`changed` counts (or
 `anchors`/`inserted`), and bounded `other_changes` paths. Plain-text notices go to
 stderr; JSON notices are fields. `previous` is retained before any mutation,
@@ -118,10 +126,17 @@ keeps the revision. A lost write receipt is an unknown outcome; inspect current
 source before retrying an insertion. A post-save retention failure returns a
 successful write receipt with `retention_warning`, never a misleading failed save.
 
-Cooperating Emm Notes and mdt writers share the same source gate. Tools which
-ignore that gate can race a file's final read and atomic rename. Writers using
-different state directories also do not coordinate. Issue-description adapters
-use an atomic database compare-and-swap instead of the file gate.
+Cooperating Emm Notes and mdt writers share the same source gate. If the final
+pre-write check sees different bytes, mdt refuses the write (exit 9), retains
+that exact observed version, and reports its `current_revision`. If retention
+fails, the error says so and omits the revision; no source write committed.
+That version may already have been superseded by another save when the error
+arrives. MDT reports observed bytes, not which editor or person wrote them.
+
+Tools which ignore the gate can still race a file's final read and atomic rename;
+unobserved changes cannot be detected or retained. Writers using different state
+directories also do not coordinate. Issue-description adapters use an atomic
+database compare-and-swap instead of the file gate.
 
 ## Local retention and configuration
 

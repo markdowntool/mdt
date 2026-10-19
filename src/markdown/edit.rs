@@ -66,30 +66,43 @@ pub(super) fn execute(
         (before.exact_range(node), Some(node))
     };
     let same = base == live;
-    let live_range = if same {
-        base_range.clone()
-    } else if let Some(old) = literal {
-        let selected = current.select(&request.nodes)?;
-        let found = unique(matches(&live, current.exact_range(selected), old))?;
-        // The prepared intention is the baseline occurrence, not any new
-        // globally unique occurrence in an unrelated section.
-        let owner = before.containing(&base_range);
-        let labels: Vec<_> = before.path(owner).into_iter().map(str::to_owned).collect();
-        let owner = current.exact_range(current.select(&labels)?);
-        if found.start < owner.start || found.end > owner.end {
-            return Err(conflict(&previous));
-        }
-        found
-    } else if let Some(node) = node {
-        if node == 0 {
-            0..live.len()
+    // Only failures resolving an already-valid baseline intention carry
+    // changed-source context. A bad baseline request is still just a bad request.
+    let live_range = (|| {
+        Ok(if same {
+            base_range.clone()
+        } else if let Some(old) = literal {
+            let selected = current.select(&request.nodes)?;
+            let found = unique(matches(&live, current.exact_range(selected), old))?;
+            // The prepared intention is the baseline occurrence, not any new
+            // globally unique occurrence in an unrelated section.
+            let owner = before.containing(&base_range);
+            let labels: Vec<_> = before.path(owner).into_iter().map(str::to_owned).collect();
+            let owner = current.exact_range(current.select(&labels)?);
+            if found.start < owner.start || found.end > owner.end {
+                return Err(conflict(&previous));
+            }
+            found
+        } else if let Some(node) = node {
+            if node == 0 {
+                0..live.len()
+            } else {
+                let labels: Vec<String> =
+                    before.path(node).into_iter().map(str::to_owned).collect();
+                current.exact_range(current.select(&labels)?)
+            }
         } else {
-            let labels: Vec<String> = before.path(node).into_iter().map(str::to_owned).collect();
-            current.exact_range(current.select(&labels)?)
-        }
-    } else {
-        relocate_range(&before, &current, &base_range, request.force, &previous)?
-    };
+            relocate_range(&before, &current, &base_range, request.force, &previous)?
+        })
+    })()
+    .map_err(|mut error| {
+        error.message = format!(
+            "Source changed since supplied revision; changed 0. {}",
+            error.message
+        );
+        error.current_revision = Some(previous.clone());
+        error
+    })?;
     let changed_target = base[base_range.clone()] != live[live_range.clone()];
     if changed_target && !request.force {
         return Err(conflict(&previous));
@@ -198,7 +211,18 @@ pub(super) fn execute(
     // The actual pre-write source must be retained before CAS, even for force.
     // Do not mutate if source retention fails or has exhausted its bounds.
     store.observe(&live)?;
-    source.compare_and_swap(&live, &candidate)?;
+    if let Some(observed) = source.compare_and_swap(&live, &candidate)? {
+        let mut error = Error::new("locked", "Source changed during this operation; changed 0");
+        match store.observe(&observed) {
+            Ok(revision) => error.current_revision = Some(revision),
+            Err(cause) => {
+                error.message.push_str(&format!(
+                    ". Observed version could not be retained: {cause}. Read current source before retrying."
+                ));
+            }
+        }
+        return Err(error);
+    }
     if changed && store.observe(&candidate).is_err() {
         value["retention_warning"] = json!(WARNING);
         notices.push(WARNING.into());

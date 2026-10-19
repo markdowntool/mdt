@@ -86,10 +86,24 @@
     or permits insertion beside a changed, still-unambiguous anchor.
     --force does not disable unique selection or exact literal matching.
 
+.\" Reporting revision: Codex, GPT-6 (exact variant unavailable), session 01a15578-ff67-77e2-90a9-ffccd1c679b3, 2026-10-19.
+    If a valid baseline target is missing or ambiguous in changed source, the
+    error reports that change and its retained current_revision. Exit codes stay
+    3 and 4. Invalid baseline selections remain ordinary selection errors.
+    Plain-text and JSON errors show current_revision when available. Inspect it
+    with read --rev REV or diff --since BASE --rev REV.
+
     Preserve a changed pre-write version before committing, so forced overwrites
     remain inspectable within retention. Refuse the concurrent write if that
     prerequisite cannot be met. Check and commit against one consistent live view.
     Preserve source outside the selected edit; never apply a partial write.
+
+    If the final file check observes different bytes, refuse the write (exit 9)
+    and retain that exact version as current_revision. If retention fails, report
+    that failure without a revision. No source write committed in either case.
+    The reported version may already have been superseded by another save.
+    Writers ignoring the shared gate can still race the final read and rename.
+    Unobserved changes cannot be detected or retained; writer identity is unknown.
 
     --dry-run validates and reports the same operation without mutating Markdown
     (or retention records for forget). It reserves nothing. A lost receipt is an

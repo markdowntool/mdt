@@ -1,10 +1,13 @@
 //! Saved Markdown operations shared by `mdt` and issue-description adapters.
 //!
 //! Revisions identify exact bytes at a stable source identity. Implementors must
-//! make compare-and-swap atomic with all other writers of their source.
+//! make compare-and-swap atomic with cooperating writers of their source.
+//! File writers that ignore the shared gate can still race the final check.
 mod edit;
 mod query;
 mod request;
+#[cfg(test)]
+mod tests;
 
 use crate::error::{Error, Result};
 pub use request::{help, Operation, Request};
@@ -17,9 +20,11 @@ pub trait Source {
     /// Stable absolute identity, including the store and object for virtual text.
     fn identity(&self) -> &Path;
     fn read(&mut self) -> Result<String>;
-    /// Replace only if the source still equals `expected`. Return `locked` on
-    /// contention; on error no replacement may have committed.
-    fn compare_and_swap(&mut self, expected: &str, replacement: &str) -> Result<()>;
+    /// Replace only if the source still equals `expected`. Return None on
+    /// success, or Some(exact observed bytes) on mismatch. Neither a mismatch
+    /// nor an error may commit a replacement. Return `locked` on contention
+    /// when no source bytes were observed.
+    fn compare_and_swap(&mut self, expected: &str, replacement: &str) -> Result<Option<String>>;
     /// Release any operation-wide gate after result or error. Database adapters
     /// may use the default; CAS must still be atomic.
     fn finish(&mut self) {}
@@ -93,19 +98,16 @@ impl Source for FileSource {
         }
         fs::read_to_string(&self.identity).map_err(Error::io)
     }
-    fn compare_and_swap(&mut self, expected: &str, replacement: &str) -> Result<()> {
+    fn compare_and_swap(&mut self, expected: &str, replacement: &str) -> Result<Option<String>> {
         let current = self.read()?;
         if current != expected {
-            return Err(Error::new(
-                "locked",
-                "Source changed during this operation; changed 0",
-            ));
+            return Ok(Some(current));
         }
         if current != replacement {
             mdt_core::save::atomic_write(&self.identity, replacement)
                 .map_err(|e| Error::new("io", format!("Source was not replaced: {e:#}")))?;
         }
-        Ok(())
+        Ok(None)
     }
     fn finish(&mut self) {
         self.gate = None;

@@ -22,6 +22,7 @@ impl Note {
             .arg(&self.file)
             .args(args)
             .env("QM_STATE_DIR", self.temp.path().join("state"))
+            .env("EMM_HOME", self.temp.path().join("home"))
             .output()
             .unwrap()
     }
@@ -134,11 +135,141 @@ fn emitted_conflict_revision_is_immediately_readable() {
     assert_eq!(out.status.code(), Some(5));
     let error: Value = serde_json::from_slice(&out.stderr).unwrap();
     let current = error["error"]["current_revision"].as_str().unwrap();
+    let plain = note.run(
+        "replace",
+        &["--rev", &base, "--node", "Plan", "--body", &body],
+    );
+    assert_eq!(plain.status.code(), Some(5));
+    assert!(plain.stdout.is_empty());
+    assert!(String::from_utf8(plain.stderr)
+        .unwrap()
+        .contains(&format!("current_revision {current}")));
     assert_eq!(note.json("read", &["--rev", current])["content"], live);
     assert_eq!(
         note.json("diff", &["--since", &base, "--rev", current])["revision"],
         current
     );
+}
+
+#[test]
+fn changed_source_selection_errors_report_a_retained_revision() {
+    for (live, selection, code, exit) in [
+        (
+            "# Plan\nGone\n",
+            vec!["--old", "Old", "--new", "New"],
+            "not_found",
+            3,
+        ),
+        (
+            "# Plan\nOld Old\n",
+            vec!["--old", "Old", "--new", "New"],
+            "ambiguous",
+            4,
+        ),
+        ("# Renamed\nOld\n", vec!["--node", "Plan"], "not_found", 3),
+        (
+            "# Plan\nOld\n# Plan\nOther\n",
+            vec!["--node", "Plan"],
+            "ambiguous",
+            4,
+        ),
+    ] {
+        let note = Note::new("# Plan\nOld\n");
+        let base = note.rev();
+        fs::write(&note.file, live).unwrap();
+        let body = note.body("# Plan\nReplacement\n");
+        let mut args = vec!["--rev", &base];
+        args.extend(selection);
+        if args.contains(&"--node") {
+            args.extend(["--body", &body]);
+        }
+        let plain = note.run("replace", &args);
+        assert_eq!(plain.status.code(), Some(exit));
+        assert!(plain.stdout.is_empty());
+        args.push("--json");
+        let out = note.run("replace", &args);
+        assert_eq!(out.status.code(), Some(exit));
+        assert!(out.stdout.is_empty());
+        let error: Value = serde_json::from_slice(&out.stderr).unwrap();
+        let error = &error["error"];
+        assert_eq!(error["code"], code);
+        assert!(error["message"]
+            .as_str()
+            .unwrap()
+            .contains("Source changed since supplied revision"));
+        let current = error["current_revision"].as_str().unwrap();
+        let plain = String::from_utf8(plain.stderr).unwrap();
+        assert!(plain.contains("Source changed since supplied revision"));
+        assert!(plain.contains(&format!("current_revision {current}")));
+        assert_eq!(fs::read_to_string(&note.file).unwrap(), live);
+        // The receipt refers to observed bytes, even if another editor saves again.
+        fs::write(&note.file, "# Later\nAnother save\n").unwrap();
+        assert_eq!(note.json("read", &["--rev", current])["content"], live);
+    }
+}
+
+#[test]
+fn invalid_baseline_selections_are_not_mislabeled_as_concurrent_changes() {
+    for (base_text, old, exit) in [
+        ("# Plan\nOld\n", "Absent", 3),
+        ("# Plan\nOld Old\n", "Old", 4),
+    ] {
+        let note = Note::new(base_text);
+        let base = note.rev();
+        let live = "# Changed\nOther editor's save\n";
+        fs::write(&note.file, live).unwrap();
+        let out = note.run(
+            "replace",
+            &["--rev", &base, "--old", old, "--new", "New", "--json"],
+        );
+        assert_eq!(out.status.code(), Some(exit));
+        let error: Value = serde_json::from_slice(&out.stderr).unwrap();
+        assert!(error["error"]["current_revision"].is_null());
+        assert!(!error["error"]["message"]
+            .as_str()
+            .unwrap()
+            .contains("Source changed"));
+        assert_eq!(fs::read_to_string(&note.file).unwrap(), live);
+    }
+}
+
+#[test]
+fn changed_source_errors_keep_revision_and_context_with_a_small_budget() {
+    let label = "長い名前".repeat(100);
+    let note = Note::new(&format!("# {label}\nOld\n"));
+    let base = note.rev();
+    fs::write(&note.file, "# Renamed\nOld\n").unwrap();
+    let body = note.body("Replacement\n");
+    let mut args = vec![
+        "--rev",
+        &base,
+        "--node",
+        &label,
+        "--body",
+        &body,
+        "--max-bytes",
+        "256",
+    ];
+    for json in [false, true] {
+        if json {
+            args.push("--json");
+        }
+        let out = note.run("replace", &args);
+        assert_eq!(out.status.code(), Some(3));
+        assert!(out.stdout.is_empty());
+        assert!(out.stderr.len() <= 256);
+        let text = String::from_utf8(out.stderr).unwrap();
+        assert!(text.contains("Source changed since supplied revision"));
+        assert!(text.contains("current_revision"));
+        if json {
+            let error: Value = serde_json::from_str(&text).unwrap();
+            let current = error["error"]["current_revision"].as_str().unwrap();
+            assert_eq!(
+                note.json("read", &["--rev", current])["content"],
+                "# Renamed\nOld\n"
+            );
+        }
+    }
 }
 #[test]
 fn saved_emm_observations_are_the_same_revisions_and_aba_history_is_visible() {

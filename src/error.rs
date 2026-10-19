@@ -48,7 +48,11 @@ impl Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}: {}", self.code, self.message)
+        write!(f, "{}: {}", self.code, self.message)?;
+        if let Some(revision) = &self.current_revision {
+            write!(f, "; current_revision {revision}")?;
+        }
+        Ok(())
     }
 }
 
