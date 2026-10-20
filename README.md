@@ -8,14 +8,14 @@ we asked reported that rereading large files was their biggest frustration.
 
 ## Downloads
 
-Prebuilt **mdt 0.1.0** archives:
+Prebuilt **mdt 0.1.1** archives:
 
 | Platform | Download |
 | --- | --- |
-| macOS — Apple silicon (ARM64) | [Download .tar.gz](https://emm-artifacts.t3.tigrisfiles.io/mdt/mdt-cli-0.1.0-e8ecda3200-308d6903d71f50af68b26ced5de48f0f491c76d8473fd2bafd590eea04588abf-macos-arm64.tar.gz) |
-| macOS — Intel (x86-64) | [Download .tar.gz](https://emm-artifacts.t3.tigrisfiles.io/mdt/mdt-cli-0.1.0-e8ecda3200-141e7735d95f4fb5d63c4cbf30846df18b0b4c6d2f088799ede9c6222f2a2e1e-macos-x86_64.tar.gz) |
-| Linux — ARM64 | [Download .tar.gz](https://emm-artifacts.t3.tigrisfiles.io/mdt/mdt-cli-0.1.0-e8ecda3200-0d4df65f3d5a444629d1b360c19453ce0ee898b60de2f091ef9326b7de74827e-linux-arm64.tar.gz) |
-| Linux — x86-64 | [Download .tar.gz](https://emm-artifacts.t3.tigrisfiles.io/mdt/mdt-cli-0.1.0-e8ecda3200-44a89168899ed041bfeff73dbe4440c321207c22dd91951dec27bc10c6869ae6-linux-x86_64.tar.gz) |
+| macOS — Apple silicon (ARM64) | [Download .tar.gz](https://emm-artifacts.t3.tigrisfiles.io/mdt/mdt-cli-0.1.1-171e6c8e0e-f347f7a54d04aacf40771d44c9c107ccb62e2e5301eb4b5afb3283d6bc855b3c-macos-arm64.tar.gz) |
+| macOS — Intel (x86-64) | [Download .tar.gz](https://emm-artifacts.t3.tigrisfiles.io/mdt/mdt-cli-0.1.1-171e6c8e0e-eeedf8c3423cefd921010954ddb4db9e4c02f5e1d1bea04c9e860dcdd568b098-macos-x86_64.tar.gz) |
+| Linux — ARM64 | [Download .tar.gz](https://emm-artifacts.t3.tigrisfiles.io/mdt/mdt-cli-0.1.1-171e6c8e0e-74ebc84d2fc742df8840c541f75beca1eee1b1805f8f4d17f5796db994d2ae3c-linux-arm64.tar.gz) |
+| Linux — x86-64 | [Download .tar.gz](https://emm-artifacts.t3.tigrisfiles.io/mdt/mdt-cli-0.1.1-171e6c8e0e-5e3aef85ca373fb2a568d8fba477b8a2266fdf0a2e4da4cf19f1f88b9e03143a-linux-x86_64.tar.gz) |
 
 Verify your archive against the [published SHA-256 checksums](https://emmflow.com/mdt),
 then extract it and follow [Install for your user](#install-for-your-user) below.
