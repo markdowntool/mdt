@@ -370,7 +370,7 @@ fn help_and_version_have_no_state_side_effect_and_old_modes_are_rejected() {
         .env("QM_STATE_DIR", &state)
         .output()
         .unwrap();
-    assert!(String::from_utf8_lossy(&output.stdout).starts_with("mdt 0.1.0 "));
+    assert!(String::from_utf8_lossy(&output.stdout).starts_with(concat!("mdt ", env!("CARGO_PKG_VERSION"), " ")));
     assert!(!state.exists());
     let note = Note::new("source");
     for args in [
