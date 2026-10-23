@@ -142,6 +142,12 @@ history and file gates; that environment variable retains its established name.
 Revision hash domains and shared database formats also retain their established
 values. No account is needed for local operations.
 
+## Sponsors
+Emm (Every Millisecond Matters)
+https://emmflow.com/
+<img width="1016" height="384" alt="image" src="https://github.com/user-attachments/assets/c08e87b8-0638-4bf7-bc5b-f6bc866fb176" />
+
+
 ## License
 
 The first-party source in this repository is available under the [MIT license](LICENSE).
